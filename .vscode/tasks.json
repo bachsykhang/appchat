@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Android: Setup Build Environment (WSL)",
+      "type": "shell",
+      "command": "wsl.exe",
+      "args": [
+        "bash",
+        "-lc",
+        "cd \"$(wslpath '${workspaceFolder}')/android_app\" && chmod +x setup_wsl_build.sh build_apk.sh && ./setup_wsl_build.sh"
+      ],
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK (WSL)",
+      "type": "shell",
+      "command": "wsl.exe",
+      "args": [
+        "bash",
+        "-lc",
+        "cd \"$(wslpath '${workspaceFolder}')/android_app\" && chmod +x build_apk.sh && ./build_apk.sh"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Server: Run Chat Backend",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "app.py"
+      ],
+      "group": "none",
+      "problemMatcher": []
+    }
+  ]
+}

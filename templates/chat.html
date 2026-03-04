@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Room {{ room_code }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="chat-shell" data-room-code="{{ room_code }}">
+    <header class="chat-header panel">
+      <div>
+        <p class="eyebrow">Room Code</p>
+        <h1 id="roomCode">{{ room_code }}</h1>
+        <p id="statusText">Dang ket noi realtime...</p>
+      </div>
+      <a class="back-link" href="/">Tao/Join room khac</a>
+    </header>
+
+    <section class="chat-layout">
+      <aside class="panel users-panel">
+        <h2>Thanh vien (<span id="memberCount">0</span>)</h2>
+        <ul id="memberList"></ul>
+      </aside>
+
+      <section class="panel thread-panel">
+        <div id="messageList" class="messages"></div>
+        <div class="composer">
+          <textarea id="messageInput" rows="2" maxlength="400" placeholder="Nhap tin nhan..."></textarea>
+          <div class="composer-actions">
+            <button id="sendBtn">Gui</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+  (() => {
+    const root = document.querySelector('.chat-shell');
+    const code = root.dataset.roomCode;
+    const statusText = document.getElementById('statusText');
+    const memberCount = document.getElementById('memberCount');
+    const memberList = document.getElementById('memberList');
+    const messageList = document.getElementById('messageList');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    let latest = null;
+
+    async function postJson(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body || {}),
+      });
+      return res;
+    }
+
+    function formatTime(ts) {
+      if (!ts) return '';
+      const d = new Date(ts * 1000);
+      return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    }
+
+    function renderMembers(state) {
+      memberCount.textContent = String(state.member_count || 0);
+      memberList.innerHTML = '';
+      (state.members || []).forEach((member) => {
+        const li = document.createElement('li');
+        const me = member.id === state.current_user_id ? ' (Ban)' : '';
+        li.innerHTML = `<span>${member.name}${me}</span>`;
+        memberList.appendChild(li);
+      });
+    }
+
+    function renderMessages(state) {
+      const currentUserId = state.current_user_id;
+      const atBottom = messageList.scrollHeight - messageList.scrollTop - messageList.clientHeight < 24;
+      messageList.innerHTML = '';
+      (state.messages || []).forEach((item) => {
+        const row = document.createElement('article');
+        row.className = item.sender_id === currentUserId ? 'message mine' : 'message';
+        row.innerHTML = `
+          <header>
+            <b>${item.sender}</b>
+            <small>${formatTime(item.ts)}</small>
+          </header>
+          <p>${item.text}</p>
+        `;
+        messageList.appendChild(row);
+      });
+      if (atBottom) {
+        messageList.scrollTop = messageList.scrollHeight;
+      }
+    }
+
+    function renderState(state) {
+      latest = state;
+      renderMembers(state);
+      renderMessages(state);
+      statusText.textContent = 'Dang online';
+    }
+
+    async function fetchFallbackState() {
+      const res = await fetch(`/api/room/${code}/state`);
+      if (!res.ok) return;
+      const data = await res.json();
+      renderState(data);
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      const res = await postJson(`/api/room/${code}/message`, {text});
+      if (res.ok) {
+        messageInput.value = '';
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    const socket = io();
+
+    socket.on('connect', () => {
+      statusText.textContent = 'Ket noi websocket thanh cong';
+      socket.emit('join_room', {code});
+    });
+
+    socket.on('state_update', (state) => {
+      renderState(state);
+    });
+
+    socket.on('room_error', async (payload) => {
+      statusText.textContent = payload?.error || 'Loi room';
+      await fetchFallbackState();
+    });
+
+    socket.on('disconnect', async () => {
+      statusText.textContent = 'Mat ket noi websocket, dang fallback...';
+      await fetchFallbackState();
+    });
+
+    fetchFallbackState();
+    setInterval(fetchFallbackState, 10000);
+  })();
+  </script>
+</body>
+</html>

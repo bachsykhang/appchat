@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Chat App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="landing">
+    <section class="hero">
+      <p class="eyebrow">Realtime Messaging</p>
+      <h1>Python Chat Online</h1>
+      <p>Tao room rieng, moi ban be bang ma phong, nhan tin realtime ngay lap tuc.</p>
+    </section>
+
+    <section class="panel-grid">
+      <form class="panel" method="post" action="/enter">
+        <h2>Tao phong chat</h2>
+        <label>Ten cua ban</label>
+        <input name="name" maxlength="24" placeholder="Vi du: Minh" required>
+        <input type="hidden" name="action" value="create">
+        <button type="submit">Tao phong moi</button>
+      </form>
+
+      <form class="panel" method="post" action="/enter">
+        <h2>Vao phong co san</h2>
+        <label>Ten cua ban</label>
+        <input name="name" maxlength="24" placeholder="Vi du: Lan" required>
+        <label>Ma phong</label>
+        <input name="code" maxlength="6" placeholder="ABC123" required>
+        <input type="hidden" name="action" value="join">
+        <button type="submit">Vao phong</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

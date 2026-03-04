@@ -1,0 +1,48 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - "android_app/**"
+      - ".github/workflows/build-apk.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev \
+            libffi-dev libssl-dev
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython
+
+      - name: Build debug APK
+        working-directory: android_app
+        run: |
+          buildozer android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appchat-apk
+          path: android_app/bin/*.apk
+          if-no-files-found: error

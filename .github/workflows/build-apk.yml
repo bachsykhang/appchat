@@ -40,12 +40,23 @@ jobs:
         run: |
           buildozer -v android debug 2>&1 | tee buildozer.log
 
+      - name: List build outputs
+        if: always()
+        run: |
+          echo "== android_app/bin =="
+          ls -lah android_app/bin || true
+          echo "== find apk/aab =="
+          find android_app -maxdepth 3 \( -name "*.apk" -o -name "*.aab" \) -print || true
+
       - name: Upload APK artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: appchat-apk
-          path: android_app/bin/*.apk
-          if-no-files-found: error
+          path: |
+            android_app/bin/*.apk
+            android_app/bin/*.aab
+          if-no-files-found: warn
 
       - name: Upload Build Log
         if: always()

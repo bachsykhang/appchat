@@ -10,6 +10,7 @@ orientation = portrait
 fullscreen = 0
 android.accept_sdk_license = True
 android.api = 34
+android.build_tools = 34.0.0
 android.minapi = 24
 android.ndk = 25b
 android.ndk_api = 24
